@@ -1,0 +1,535 @@
+---
+title: "Mid-term review"
+author: "Luigi Negro"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+# Loading data
+
+Firstly, we load the data with the appropriate package and we understand the dataset composition. 
+
+```{r}
+
+
+#this file will be used for dataset and statistical learning 
+
+mydata <- data.frame(stack.loss)
+
+```
+
+#Foundations in Statistics 
+
+Statistics: decision making under uncertainty.
+* collection
+* analysis
+* interpretation
+
+
+Statistical learning: it's a set of tools for *understanding data*: 
+* classified as a *supervised learning*: builiding a statistical model for predicting, or estimating, and output based on one (single) or more (multiple) inputs.
+* classified as *unsupervised learning*: there are inputs, but no supervising output
+
+## Typology of data
+
+Quantitative and Qualitative.
+
+Quantitative data are numerical and can be **discrete** or **continuous**.
+
+Qualitative data are categorical and can be **ordinal** or **nominal**.
+
+## Basic Features
+
+### Center
+
+#### Sample mean 
+```{r}
+mean(mydata$stack.loss)
+```
+
+```{r}
+median(mydata$stack.loss)
+```
+
+#### Trimmed mean
+
+It is a proportion of data from both ends of the ordered list. It is used because it gets rid of **outliers**
+
+```{r}
+attach(mydata)
+mean(mydata$stack.loss, trim = 0.05)
+```
+#### Sample quantile 
+```{r}
+quantile(stack.loss, probs = 0.75)
+```
+
+This means that 75% of the data will fall below the value 19.
+
+We can also display multiple quantiles 
+```{r}
+quantile(stack.loss, probs = c(0, 0.25, 0.5, 0.8))
+```
+
+
+#### Sample percentile
+
+Percentile: the percentage of observation that fall below a given data point.
+
+```{r}
+pnorm(1800, mean= 1500, sd= 300)
+```
+### Spread 
+
+#### Sample variance 
+```{r}
+var(stack.loss); sd(stack.loss)
+```
+
+For normally distributed data: 
+* about 68% falls within 1 SD of the mean
+* about 95% falls within 2 SD of the mean
+* about 99.7% falls within 3 SD of the mean
+
+#### IQR
+
+It gives the number of value between the 75th percentile and the 25th. 
+```{r}
+IQR(stack.loss)
+```
+If we want to see how many values correspond to these percentiles we run:
+
+```{r}
+quantile(stack.loss, probs= c(0.25, 0.75))
+```
+
+### Shape 
+
+#### Skewness and kurtosis
+
+Skewness: degree of "symmetry"
+It can be right (positive) or left (negative)
+
+
+Kurtosis: degree of "thickness".
+* leptokurtic - steep peak, heavy tails
+* platykurtic - flatter, thin tails
+* mesokurtic - right in the middle
+
+```{r}
+library(e1071)
+
+skewness((stack.loss))
+```
+If $|g1| > 2\sqrt[]{6/n}$ then the data distribution is **substantially skewed** in the direction of the sign of $g1$.  
+
+
+```{r}
+skewness(discoveries)
+```
+```{r}
+2*sqrt(6/length(discoveries))
+```
+Then we see that 1.20 > 0.489 then the distribution  is substantially skewed.
+
+#Visuals with statistics 
+
+```{r}
+# We need two packages:
+#install.packages("ISLR")
+#install.packages("dplyr")
+```
+
+```{r}
+# We now create our dataframe
+
+#mydata1 <- data.frame(College)
+```
+
+```{r}
+library(ISLR)
+mydata1 = data.frame(College)
+```
+
+```{r}
+summary(mydata1)
+```
+### Pairs
+
+```{r}
+pairs(mydata1[,1:10])
+
+```
+### Boxplot
+
+```{r}
+boxplot(Outstate~Private,
+        data=mydata1,
+        xlab="Private",
+        ylab="Outstate")
+```
+### Hist 
+
+```{r}
+# code chunk here
+hist(mydata1$Apps,
+     breaks=50,
+     xlim=c(0,25000),
+     main="Apps")
+```
+
+```{r}
+hist(mydata1$Enroll,
+     breaks=25,
+     main="Enroll")
+```
+
+# Normal Distribution 
+
+A z score of an observation is the number of standard deviation it falls above or below the mean: $ Z = (observation - mean)/SD$ 
+
+A z-score is the original measurement measured in units of the standard deviation from the expectation.
+
+For example if we want to answer the following question: 
+
+*What percent of students score below 1800 on the SAT ?*
+
+```{r}
+round(pnorm(1800, mean = 1500, sd = 300), 4)
+```
+**Answer**: 84.13% of students score below 1800. Therefore only 16.87% score above.
+
+
+If we want to know the correspondant value we proceed in this way. Let the question be: 
+
+What is the cutoff for the highest 
+10%?
+
+we first comput the z-score.
+
+```{r}
+round(qnorm(0.9),3)
+```
+Then we use the previous relationship $ Z = (observation - mean)/SD$  and solve to obtain the value of the $observation$. 
+
+## Point estimates and sampling variability 
+
+The role of statistics is to make inference on the parameters of the unobserved population based on the information that is obtained from the sample. For example, we may be interested in estimating the mean value of the heights in the population. A reasonable proposal is to use the sample average to serve as an estimate.
+
+We are often interested in population parameters.
+
+Complete populations are difficult to collect data on, so we use sample statistics as point estimates for the unknown population parameters of interest.
+
+Error in the estimate = difference between population parameter and sample statistic
+
+Bias is systematic tendency to over- or under-estimate the true population parameter.
+
+Sampling error describes how much an estimate will tend to vary from one sample to the next.
+
+Much of statistics is focused on understanding and quantifying sampling error, and sample size is helpful for quantifying this error.
+
+# Central Limit Theorem
+
+**Law of Large Numbers** definition: The Law of Large Numbers states that the distribution of the sample averagetends to be more concentrated as the sample size increases.
+
+The CLT provides an approximation of this distribution. The distribution of the sample mean is well approximated by a normal model where the mean is equal to the mean and we use the SE as the standard deviation divided by n.
+
+**SE** represents the *standard error* which is defined as the **standard deviation of the sampling distribution**.
+
+## Conditions to be met for the CLT to apply:
+
+* Indepedence: sampled obsvervations must be independent. 
+
+This is more likely if:
+ * random sampling is used
+ * if sampling without replacement, n < 10% of the population.
+ * Sample size: there should be at least 10 expected successes and 10 expected failures in the observed sample. 
+
+# T-test
+If the test statistic absolute value is greater than the reference value found in the table, then you can reject the null hypothesis of the t−test and conclude that the results of the test are statistically significant.
+
+Given a T-test with *n* degree of freedom: 
+
+```{r}
+n <- length(mydata$stack.loss)
+x.bar <- mean(mydata$stack.loss)
+s <- sd(mydata$stack.loss)
+t = (x.bar - 19)/(s/sqrt(n))
+t
+```
+The value T = -0.665 must be compared with the critical threshold of the absolute value of T statistic on (21-1) degrees of freedom.
+
+```{r}
+qt(0.975, n-1)
+```
+Since $|T| < 2.08$ then we cannot reject *H0*
+
+Remember: 
+* **Type 1** error: reject the null when the null is true.
+* **Type 2** error: accept the null when the null is false.
+
+*Example*:
+H0: there is no statistical difference between the sample average $E(X)=17.52$ and the value $x = 19$ 
+
+```{r}
+t.test(mydata$stack.loss, mu = 19)
+```
+
+# P-value
+
+**Definition**: The p-value is the probability of observing data at least as favorable to the alternative hypthesis as our current data set, if the null hypothesis is true.
+
+
+# Linear regression
+
+## Survivorship bias
+
+*Definition*: Survivorship bias or survival bias is the logical error of concentrating on the people or things that made it past some selection process and overlooking those that did not, typically because of their lack of visibility. This can lead to some false conclusions in several different ways. It is a form of selection bias.
+
+Survivorship bias can lead to overly optimistic beliefs because failures are ignored, such as when companies that no longer exist are excluded from analyses of financial performance
+
+We will load the dataset:
+
+```{r}
+#this file will be used for liner regressions 
+poverty <- readr::read_tsv("https://warin.ca/datalake/courses_data/qmibr/session4/poverty.txt")
+
+```
+
+And we build a model:
+```{r}
+#this file will be used for liner regressions 
+model1 <- lm(poverty$Poverty ~ poverty$Graduates)
+```
+
+Let's try to understand different variables.
+
+```{r}
+summary(model1)
+
+```
+If we want to build a nice table let's use *stargazer* for the model.
+
+```{r}
+if(!require("stargazer")) #install.packages("stargazer")
+# Exploratory data analysis
+library(stargazer)
+stargazer(model1, type="text", header=FALSE, digits=2)
+
+```
+If we want a nice table to be seen create an *html* file.
+
+```{r}
+stargazer(model1, type="text", header=FALSE, digits=2,
+          out="./summaryStatistics.html", title="Summary Statistics",
+          notes = "All the commands and algorithms are coded in R 4.0.3")
+```
+
+A file.html has now appeared in the working directory.
+
+## Coefficients
+
+Once done that, we can build our linear regression model. A linear regression model is a linear approach for modeling the linear relationship between an endogenous variable (dependent variable) and a set of independent variables. We want to produce a fitted line which minimizes the distances between the data points and the line itself. This distance is called residual, and it is defined as $e = y - \hat{y}$ where $\hat{y}$ is defined as the predicted value while $y$ as the observed response. 
+
+Then we define the *residual sum of squares* (RRS) as $RSS = e^2^_1 + e^2^_2 + .. + e^2^_n$. 
+
+## Accuracy 
+
+When we use estimators $\hat{y}$ we need to understand whether it's biased or unbiased.
+
+**Definition**: an umbiased estimator does not *systematically* over or under estimate the true parameter.  
+
+How accurate is the predictor $\hat{y}$ of as an estimate of $y$ ? We use the Standard error.
+
+### Standard Error
+
+Standard error is defined as the ratio between the *variance* of each of the realizations and the number of samples. 
+
+**Definition**: The standard error tells us the average amount that this estimate $\hat{y}$ differs from the actual value of $y$. 
+
+Since the standard errro is defined as $variance/number of samples$ the higher the number of samples the smaller the standard error.
+
+
+
+## Confidence interval
+
+Standard errors can be used to compute *confidence interval*. A 95% confidence interaval is defined as a range of values such that with 95% probability, the range will contain the true unknown value of the parameter. The range is defined in terms of lower and upper limits computed from the sample data.
+
+
+## R squared 
+
+It is computed as: $R^2^ = 1 - RSS/TSS$ 
+
+It tells us what percent of variability in the **dependent variable** is explained by the model. 
+The remainder of the variability is explained by variables not included in the model or by inherent randomness in the data.
+
+
+## Residuals 
+
+For high accuracy residuals should be **normal**. Check using histogram.
+
+The **variability**  of the the points around the least square line should be **constant**. This implies also constant variablity of the residuals, also called **homoskedasticity**.
+
+
+
+#Panel data (session 5)
+
+Loading and plotting lines code:
+```{r}
+re = readr::read_csv("https://warin.ca/datalake/courses_data/qmibr/session5/Real_Estate_Sample.csv")
+re1 = lm(Price ~ Living.area, data = re)
+plot(Price ~ Living.area,cex=0.5,data = re)
+```
+
+```{r}
+summary(re1)
+```
+
+We can notice that both the coefficients are solid and valuable pvalue < 0.001 and that only 13% of the variability can be explained through the model ($R^2^$)
+
+We can see that 1 square moot of the lviing area increase the price by 1.137 * 100 which measn 113.7$. 
+Is this relationship linear? Or we can suspect a non-linear relationship. 
+
+We fit another model:
+
+```{r}
+re2 = lm(Price ~ Living.area + I(Living.area^2),data = re)
+summary(re2)  # very significant quadratic effect
+
+
+```
+We can now notice that the quadratic term is way more significant than the linear one.
+
+
+#Binary variables and catergorical
+
+Remember with **dummy variables** you only need a $k -1$ dummy variables.
+
+
+### How to interpret dummy variables
+
+Once a categorical variable has been recoded as a dummy variable, the dummy variable can be used in regression analysis just like any other quantitative variable.
+
+For example, suppose we wanted to assess the relationship between household income and political affiliation (i.e., Republican, Democrat, or Independent). 
+
+We define:
+* x1 = 1 if republican, x1 = 0 otherwise
+* x2 = 1 if democrat, x2 = 0 otherwise
+
+The value of the categorical variable that is not represented explicitly by a dummy variable is called the **reference group**. In this example, the reference group consists of Independent voters
+
+In this example, a positive regression coefficient means that income is higher for the dummy variable political affiliation than for the reference group; a negative regression coefficient means that income is lower.
+
+
+# Interpretation
+
+Let's say we buld two models
+
+```{r}
+summary(modelA<-lm(Price ~ bedrooms, data = re))
+```
+
+```{r}
+summary(modelB<-lm(Price ~ bedrooms + bathrooms + Living.area, data = re))
+```
+
+**Notice the coefficient for bedrooms switched signs, and is significant in both models.*
+
+
+This tells us that Number of bedrooms is correlated with the other independent variable. This is called **multicollinearity**.
+
+Which is the "correct" model? 
+
+**Answer**: Both! There is really no such thing as a single correct model, only useful models. And both models are useful. - Model A suggests that adding a bedroom to a house is associated with a higher selling price. - Model B suggests that adding a bedroom without adding bathrooms or to the size of the living area is associated with a lower selling price. Both models provide insight into how these variables relate
+
+
+# F-test 
+
+
+## Nested models
+F-test is used to compare nested models
+
+Two models are nested if all of the variables in the smaller model are also in the larger model.
+
+The F-test is essentially testing if the added variables were truly unrelated to the dependent variable.
+
+In the multiple linear regression model setup, the F-test measures the potential relationship between the dependent variable and ALL the independent variables.
+The F-test is based on something called the analysis of variance (ANOVA) of the residuals in regression.
+
+
+If the p-value is small, then there is evidence to suggest that the extra variables are important.
+
+
+
+```{r}
+re = readr::read_csv("https://warin.ca/datalake/courses_data/qmibr/session5/Real_Estate_Sample.csv")
+modelA = lm(Price ~ bedrooms, data = re)
+modelB = lm(Price ~ bedrooms + bathrooms + Living.area, data = re)
+anova(modelA, modelB)
+```
+
+The F-test has a very small p-value. We can conclude that at least one of the two added variable is significant for the model
+
+## Non-nested models
+
+If two models are not nested, then the Akaike’s Information Criterion (AIC) is often used to determine which model is a better predictive one.
+
+**The lower the AIC for a model, the better.**
+
+
+```{r}
+summary(modelC<-lm(Price~Living.area+I(Living.area^2)+bathrooms+I(bathrooms^2), data = re))
+```
+```{r}
+AIC(modelA, modelB, modelC)
+```
+
+**Answer**: Model B has the lowest AIC, Model A has the highest AIC, and Model C is in between. Model B would be chosen as the best predictive model.
+
+
+## Waldtest nested models 
+
+```{r}
+#library(lmtest)
+#waldtest(mymodel1, mymodel2, test = "F")
+```
+
+## Encomptest non nested models
+
+```{r}
+#library(lmtest)
+#encomptest(mymodel3, mymodel4)
+```
+
+
+# Automatic model selection 
+
+In many applications there are many possible independent variables from which to build a model.
+A best predictive model (in linear regression) is one that performs best at predicting the dependent variable for data that have not been observed yet (called out-of-sample prediction).
+
+Models that have too many independent variable in them will tend to perform well with the data at hand, but much poorer for future observations. This phenomonon is called **overfitting**. 
+
+The approach of **backward stepwise regression** is adopted in selecting the best model.
+
+```{r}
+lm.full = lm(Price ~ ., data = re)
+lm.step = step(lm.full, direction = "backward")
+
+```
+```{r}
+summary(lm.step)
+```
+
+
+Here the best predictive model (of those considered) is the model with Living.area, bedrooms, and bathrooms as independent variables.
+
+Note: the model with the lowest AIC is not guaranteed to be the best predictive model, but it is likely to be pretty close
+
+You should not report the *p-values* from the regression output table. We have considered many models so now *p-values* lose their interpretation. 
+
+
+
+
+
+
